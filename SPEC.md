@@ -1,3 +1,4 @@
+# Pair Agent – Konzept
 
 *Ein Agent als echter Pair-Programming-Partner: Dialog, gemeinsames Zeigen, abgestufte Autonomie.*
 
@@ -82,6 +83,10 @@ Der Grundmodus ist der enge Dialog am gemeinsamen Code. Wichtige Regeln:
 - *Bei Fragen:* Agent kommentiert nur auf Trigger, die man selbst auslöst.
 - *Kollege:* Voller Pair-Modus – proaktive Kommentare im Minuten-Takt.
 
+Die Stufen unterscheiden sich im Trigger-Vokabular: *Still* = direkte Fragen; *Bei Fragen* = zusätzlich Trigger, die der Mensch selbst auslöst (Save, Region verlassen); *Kollege* = zusätzlich echte Initiative des Agenten. V0.1-Kollege ist damit de facto "Bei Fragen" – eigene Agenten-Initiative kommt später.
+
+**Erlaubnis und Dosierung als zwei Ebenen.** Der Regler bestimmt, was der Agent *darf* – eine harte, mechanisch erzwungene Grenze. Was er daraus im Einzelfall *tut*, entscheidet ein **Proaktivitäts-Gate**: eine zentrale Stelle im Code, die bei jedem Trigger wählt – schweigen oder sprechen, in welcher Form, in welchem Umfang. Die Invarianten garantiert der Code (in Still niemals ungefragt, max. ein Kommentar pro Save); das Urteil "lohnt sich das hier?" und die Form trifft das Modell innerhalb eines Budgets. So bleibt der Regler ehrlich: Kein adaptives Verhalten kann die Erlaubnis unterlaufen. Die geplante Kontingenz (CoMeT-Mechanik) verändert nur Parameter dieses Gates, keine neuen Codepfade. Ausbau in Stufen: erst statisches Gate mit Logging der Verhaltenssignale (V0.1), dann Cooldown (N Saves Ruhe nach Interaktion), dann kontingente Leiter innerhalb des Kollege-Modus – mit asymmetrischer Dosierung: schnell runter (Genervt-Sein killt die freiwillige Nutzung), langsam rauf.
+
 Der Kollege-Modus ist ein Zustand für ein paar Stunden am Tag, nicht für acht. Der Regler gehört ins UI, nicht in eine Config-Datei.
 
 **Geteilter Kontext – erweitert per Zeigegeste:** Basis-Kontext ist das, was der Mensch gerade sieht: offene Datei, Selection, Terminal-Output, letzte Änderungen. Darüber hinaus *darf* der Agent weitere Dateien lesen – wie ein Kollege mit eigenem Laptop, der kurz im Code stöbert. Der entscheidende Unterschied zu heutigen Agent-Tools ist nicht das Lesen, sondern der **Zugang zum Kontext**: Der Agent kann nicht still in einem Wissensraum arbeiten, den der Mensch nie sieht. Was er woanders findet, bringt er aktiv in den gemeinsamen Raum – "guck mal da noch" – mit Sprung zur Stelle und Begründung, warum das relevant ist. Neuer Kontext entsteht also immer per Zeigegeste in beide Richtungen, nie als stille Hintergrund-Erweiterung. Kein "Agent hat 12 Dateien gelesen", während der Mensch tippt – sondern "Agent hat in 12 Dateien gelesen und zeigt dir die 2 Stellen, auf die es ankommt".
@@ -150,6 +155,8 @@ Die zentralen Design-Entscheidungen dieses Konzepts sind nicht intuitiv, sondern
 
 **Vorbehalte:** Die VibeCheck-Studie rekrutierte AI-native Laien, nicht Senior-Entwickler; CoMeT testete Lernaufgaben, nicht Feature-Work; Schul-RCTs übertragen nicht automatisch auf Profis. Die Bjork'sche Basis ist dagegen Jahrzehnte-robust und domänenübergreifend. Detailanalyse in der separaten Bestandsaufnahme "Wissenschaftliche Grundlagen".
 
+**Quellen-Herkunft:** Die Belege stammen aus zwei Dokumenten: Lern-/Kognitionsforschung (VibeCheck, Bjork/Desirable Difficulties, CoMeT, Self-Explanation, Metakognitions-Studien) → Bestandsaufnahme "Wissenschaftliche Grundlagen"; Markt-/Interaktionsforschung (Codellaborator N=18, Timing-Studie 52 %/62 %) → Bestandsaufnahme "Markt &amp; Forschung". Beide URIs sind jeweils dort im Quellenverzeichnis verankert.
+
 ---
 
 ## 7. Was das Konzept nicht ist (Non-Goals)
@@ -171,6 +178,7 @@ Die ursprünglich offenen Fragen sind wie folgt entschieden:
 4. **Provider-Unabhängigkeit → mehrere Provider vorsehen.** Offen gelassen, ob "Partner-Qualität" pro Provider unterschiedlich definiert wird – sehen wir dann.
 5. **Abgrenzung vom Bestehenden → recherchiert.** Die Bestandsaufnahme (separater Canvas) hat ergeben: Einzelelemente existieren, die Kombination aus Dialog, Deixis und abgestufter Autonomie nicht.
 6. **Der Nerv-Faktor → durch Forschung beantwortet.** Die Timing-Studie liefert die empirische Grundlage: Trigger an Workflow-Grenzen (Save, Region verlassen) statt mitten im Flow; dazu der kontingente Regler (CoMeT-Mechanik) als Dosierung. Die Recherche-Details stehen im Evidenz-Abschnitt.
+7. **Host → eigene, dünne VS Code-Extension mit hostunabhängigem Core.** Selection, Save-Events und Regler-UI sind Editor-nativ; die Interaktionsform ist das Produkt und verlangt den eigenen Rahmen. Der Core (Session, Markdown-Gedächtnis, Provider-Layer, Gate) lebt hostunabhängig hinter einem schmalen Host-Adapter – unit-testbar ohne Editor, VS Code-Forks teilen denselben Adapter. Stack: TypeScript, Webview mit React + Tailwind (CSP-bewusst gebaut, Theme-Token auf die Editor-Variablen). Design ist erklärtes Qualitätsziel – das Tool soll gut aussehen und Spaß machen; V0.1 poliert die eigenen Flächen (Frage-Karte, Regler, Chat), keine komplette visuelle Identität. Terminal-first (z.B. OpenCode) schied aus: Es würde §3.2/§9.2 aushebeln und genau den Teil nie testen, der das Tool von einem Chat-Plugin unterscheidet.
 
 ---
 
@@ -184,7 +192,7 @@ Ziel: Das Tool so schnell wie möglich produktiv nutzbar machen – und dann **d
 
 1. **Session-Start/-Stopp** – Kommando startet eine Pair-Session (entscheidung 1: session-basiert).
 2. **Chat-Sidebar mit geteiltem Kontext** – Agent sieht aktive Datei, Selection und Terminal-Output des Menschen; Chat ist der Dialog-Kanal.
-3. **Save-Trigger** – Beim Speichern/Verlassen einer Region darf der Agent einen kurzen Kommentar abgeben (2–3 Sätze), erscheint im Chat mit file:line-Verweis. Das ist Deixis-Light: Zeigen per Link statt per Highlight.
+3. **Save-Trigger** – Beim Speichern/Verlassen einer Region darf der Agent einen kurzen Kommentar abgeben (2–3 Sätze), erscheint im Chat mit file:line-Verweis. Form nach Inhalt: Feststellung für objektive Bugs; für Design-Zweifel eine **Frage mit aufklappbarer Antwort** – die Antwort ist erst nach eigener Überlegung sichtbar (Generation-Fenster, gelenkte Selbst-Erklärung). Reveal-Klick, ausbleibende Reaktion und Moduswechsel werden ab Tag 1 als Verhaltenssignale ins Session-Protokoll geloggt – vom Gate in V0.1 noch ignoriert, aber Datenbasis für die spätere Kontingenz (Dogfood = Evidenzfenster). Das ist Deixis-Light: Zeigen per Link statt per Highlight.
 4. **Lautstärkeregler, zwei Stufen** – *Still* (nur auf explizite Fragen) und *Kollege* (Save-Trigger aktiv). Die dritte Stufe und die CoMeT-Kontingenz kommen später.
 5. **Multi-Provider** – provider-neutraler API-Layer (direkte APIs und/oder OpenRouter), Modell konfigurierbar (Entscheidung 4).
 6. **Markdown-Gedächtnis** – Session-Protokoll + wachsende Notiz-Datei, beim Start geladen, für den Menschen les- und editierbar (Entscheidung 2).
@@ -199,4 +207,4 @@ Ziel: Das Tool so schnell wie möglich produktiv nutzbar machen – und dann **d
 
 ## 10. Zusammenfassung in einem Satz
 
-Ein Agent-Tool, das den Menschen zum verstehenden Co-Autor macht statt zum müden Reviewer: Dialog im Minuten-Takt, gemeinsames Zeigen im Editor, und Autonomie nur als verabredeter Modus mit sauberem Rückweg..
+Ein Agent-Tool, das den Menschen zum verstehenden Co-Autor macht statt zum müden Reviewer: Dialog im Minuten-Takt, gemeinsames Zeigen im Editor, und Autonomie nur als verabredeter Modus mit sauberem Rückweg.
